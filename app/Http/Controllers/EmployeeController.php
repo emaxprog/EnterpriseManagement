@@ -10,6 +10,11 @@ use League\Flysystem\Exception;
 
 class EmployeeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -17,8 +22,13 @@ class EmployeeController extends Controller
      */
     public function index()
     {
+        $employees = Employee::paginate(10);
 
-        return view('employees.index');
+        $data = [
+            'employees' => $employees,
+        ];
+
+        return view('employees.index', $data);
     }
 
     /**
@@ -29,9 +39,11 @@ class EmployeeController extends Controller
     public function create()
     {
         $departments = Department::all();
+
         $data = [
             'departments' => $departments,
         ];
+
         return view('employees.create', $data);
     }
 
@@ -44,33 +56,33 @@ class EmployeeController extends Controller
     public function store(Request $request, StoreEmployeeRequest $employeeRequest)
     {
         $departments = $request->departments;
-        try {
-            $employee = new Employee();
-            $employee->name = $request->name;
-            $employee->surname = $request->surname;
-            $employee->patronymic = $request->patronymic;
-            $employee->gender = $request->gender;
-            $employee->salary = $request->salary;
-            if (!$employee->save()) {
-                throw new Exception('Произошла ошибка при сохранении!');
-            }
-            $insertedId = $employee->employee_id;
 
-            $insertedEmployee = Employee::find($insertedId);
-
-            foreach ($departments as $department) {
-                $insertedEmployee->departments()->attach((int)$department);
-            }
-
-            foreach ($insertedEmployee->departments as $dep) {
-                $dep->max_salary = $dep->employees->max('salary');
-                $dep->count_employees = $dep->employees->count();
-                $dep->save();
-            }
-            return 'Сотрудник успешно добавлен!';
-        } catch (Exception $e) {
-            return $e->getMessage();
+        $employee = new Employee();
+        $employee->name = $request->name;
+        $employee->surname = $request->surname;
+        $employee->patronymic = $request->patronymic;
+        $employee->gender = $request->gender;
+        $employee->salary = $request->salary;
+        if (!$employee->save()) {
+            return response()->json(['content' => 'Произошла ошибка при сохранении!'], 500);
         }
+        $insertedId = $employee->employee_id;
+
+        $insertedEmployee = Employee::find($insertedId);
+
+        foreach ($departments as $department) {
+            $insertedEmployee->departments()->attach((int)$department);
+        }
+
+        foreach ($insertedEmployee->departments as $dep) {
+            $dep->max_salary = $dep->employees->max('salary');
+            $dep->count_employees = $dep->employees->count();
+            if (!$dep->save()) {
+                return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
+            }
+        }
+
+        return 'Сотрудник успешно добавлен!';
     }
 
     /**
@@ -92,7 +104,15 @@ class EmployeeController extends Controller
      */
     public function edit($id)
     {
-        //
+        $employee = Employee::find($id);
+        $departments = Department::all();
+
+        $data = [
+            'employee' => $employee,
+            'departments' => $departments,
+        ];
+
+        return view('employees.edit', $data);
     }
 
     /**
@@ -102,9 +122,44 @@ class EmployeeController extends Controller
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, StoreEmployeeRequest $employeeRequest)
     {
-        //
+        $employee = Employee::find($id);
+        $oldDepartments = $employee->departments;
+        $departments = $request->departments;
+
+        $employee->name = $request->name;
+        $employee->surname = $request->surname;
+        $employee->patronymic = $request->patronymic;
+        $employee->gender = $request->gender;
+        $employee->salary = $request->salary;
+
+        if (!$employee->save()) {
+            return response()->json(['content' => 'Произошла ошибка при сохранении измененных данных!'], 500);
+        }
+
+        $updatedId = $employee->employee_id;
+
+        $updatedEmployee = Employee::find($updatedId);
+
+        $updatedEmployee->departments()->detach();
+
+        foreach ($departments as $department) {
+            $updatedEmployee->departments()->attach((int)$department);
+        }
+
+        $commonDepartments = $oldDepartments->merge($updatedEmployee->departments);
+
+
+        foreach ($commonDepartments as $dep) {
+            $dep->max_salary = $dep->employees->max('salary');
+            $dep->count_employees = $dep->employees->count();
+            if (!$dep->save()) {
+                return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
+            }
+        }
+
+        return 'Данные сотрудника успешно изменены!';
     }
 
     /**
@@ -115,6 +170,21 @@ class EmployeeController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $employee = Employee::find($id);
+        $oldDepartments = $employee->departments;
+
+        if (!Employee::destroy($id)) {
+            return request()->json(['content' => 'Произошла ошибка при удалении сотрудника!'], 500);
+        }
+
+        foreach ($oldDepartments as $dep) {
+            $dep->max_salary = $dep->employees->max('salary');
+            $dep->count_employees = $dep->employees->count();
+            if (!$dep->save()) {
+                return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
+            }
+        }
+
+        return 'Сотрудник успешно удален!';
     }
 }

@@ -9,6 +9,11 @@ use League\Flysystem\Exception;
 
 class DepartmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -16,8 +21,13 @@ class DepartmentController extends Controller
      */
     public function index()
     {
+        $departments = Department::paginate(10);
 
-        return view('departments.index');
+        $data = [
+            'departments' => $departments
+        ];
+
+        return view('departments.index', $data);
     }
 
     /**
@@ -39,16 +49,14 @@ class DepartmentController extends Controller
      */
     public function store(Request $request, StoreDepartmentRequest $departmentRequest)
     {
-        try {
-            $department = new Department();
-            $department->name = $request->name;
-            if (!$department->save()) {
-                throw new Exception('Произошла ошибка при сохранении');
-            }
-            return 'Отдел успешно сохранен!';
-        } catch (Exception $e) {
-            return $e->getMessage();
+        $department = new Department();
+        $department->name = $request->name;
+
+        if (!$department->save()) {
+            return response()->json(['content' => 'Произошла ошибка при сохранении'], 500);
         }
+
+        return 'Отдел успешно сохранен!';
     }
 
     /**
@@ -70,7 +78,13 @@ class DepartmentController extends Controller
      */
     public function edit($id)
     {
-        //
+        $department = Department::find($id);
+
+        $data = [
+            'department' => $department,
+        ];
+
+        return view('departments.edit', $data);
     }
 
     /**
@@ -80,10 +94,18 @@ class DepartmentController extends Controller
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, StoreDepartmentRequest $departmentRequest)
     {
-        //
+        $department = Department::find($id);
+        $department->name = $request->name;
+
+        if (!$department->save()) {
+            return response()->json(['content' => 'Произошла ошибка при сохранении измененных данных'], 500);
+        }
+
+        return 'Данные отдела успешно изменены!';
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -93,6 +115,10 @@ class DepartmentController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if (!Department::destroy($id)) {
+            return response()->json(['content' => 'Произошла ошибка при удалении отдела'], 500);
+        }
+
+        return 'Отдел успешно удален';
     }
 }
