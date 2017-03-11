@@ -12,6 +12,8 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/jquery.gritter.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/common.css') }}" rel="stylesheet">
 
     <!-- Scripts -->
     <script>
@@ -45,6 +47,7 @@
                 <!-- Left Side Of Navbar -->
                 <ul class="nav navbar-nav">
                     @if(!Auth::guest())
+                        <li><a href="/home">Главная</a></li>
                         <li><a href="{{ route('departments.index') }}">Отделы</a></li>
                         <li><a href="{{ route('employees.index') }}">Сотрудники</a></li>
                     @endif
@@ -89,5 +92,8 @@
 
 <!-- Scripts -->
 <script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('js/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('js/jquery.gritter.min.js') }}"></script>
+<script src="{{ asset('js/common.js') }}"></script>
 </body>
 </html>
