@@ -115,6 +115,12 @@ class DepartmentController extends Controller
      */
     public function destroy($id)
     {
+        $department = Department::find($id);
+
+        if ($department->employees->count() > 0) {
+            return response()->json(['content' => 'Нельзя удалить отдел в котором есть сотрудники'], 500);
+        }
+
         if (!Department::destroy($id)) {
             return response()->json(['content' => 'Произошла ошибка при удалении отдела'], 500);
         }

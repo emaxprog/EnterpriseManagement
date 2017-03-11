@@ -55,7 +55,9 @@ class EmployeeController extends Controller
      */
     public function store(Request $request, StoreEmployeeRequest $employeeRequest)
     {
-        $departments = $request->departments;
+        if (!$departments = $request->departments) {
+            return response()->json(['content' => 'Нельзя создать сотрудника не указав ему хотя бы один отдел'], 500);
+        }
 
         $employee = new Employee();
         $employee->name = $request->name;
