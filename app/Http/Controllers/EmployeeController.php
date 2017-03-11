@@ -23,7 +23,7 @@ class EmployeeController extends Controller
     public function index()
     {
         $employees = Employee::paginate(10);
-
+        
         $data = [
             'employees' => $employees,
         ];

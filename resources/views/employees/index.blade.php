@@ -31,9 +31,7 @@
                             <td>{{ $employee->gender }}</td>
                             <td>{{ $employee->salary }}</td>
                             <td>
-                                @foreach($employee->departments as $department)
-                                    {{ $department->name }} ,
-                                @endforeach
+                                {{ $employee->departments->implode('name',',') }}
                             </td>
                             <td><a href="{{ route('employees.edit',['employee'=>$employee->employee_id]) }}"
                                    class="btn btn-default"><i

@@ -23,7 +23,8 @@ class CreateDepartmentEmployeeTable extends Migration
                 ->onUpdate('cascade');
             $table->foreign('employee_id')
                 ->references('employee_id')->on('employees')
-                ->onUpdate('cascade');
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
         });
     }
 

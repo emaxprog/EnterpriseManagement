@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container">
-        <h1 class="text-center">Создать отдел</h1>
+        <h1 class="text-center">Редактировать отдел</h1>
         <div class="row">
             <div class="col-md-12">
                 <form id="department_form"

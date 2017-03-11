@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container">
-        <h1 class="text-center">Добавить сотрудника</h1>
+        <h1 class="text-center">Редактировать сотрудника</h1>
         <div class="row">
             <div class="col-md-12">
                 <form id="employee_form" action="{{route('employees.update',['employee'=>$employee->employee_id])}}"
