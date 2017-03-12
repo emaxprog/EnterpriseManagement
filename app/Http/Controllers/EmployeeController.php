@@ -23,7 +23,7 @@ class EmployeeController extends Controller
     public function index()
     {
         $employees = Employee::paginate(10);
-        
+
         $data = [
             'employees' => $employees,
         ];
@@ -126,9 +126,12 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, $id, StoreEmployeeRequest $employeeRequest)
     {
+        if (!$departments = $request->departments) {
+            return response()->json(['content' => 'Нельзя сохранить изменения сотрудника не указав ему хотя бы один отдел'], 500);
+        }
+
         $employee = Employee::find($id);
         $oldDepartments = $employee->departments;
-        $departments = $request->departments;
 
         $employee->name = $request->name;
         $employee->surname = $request->surname;
