@@ -7,6 +7,7 @@ use App\Employee;
 use App\Http\Requests\StoreEmployeeRequest;
 use Illuminate\Http\Request;
 use League\Flysystem\Exception;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
@@ -65,6 +66,7 @@ class EmployeeController extends Controller
         $employee->patronymic = $request->patronymic;
         $employee->gender = $request->gender;
         $employee->salary = $request->salary;
+        DB::beginTransaction();
         if (!$employee->save()) {
             return response()->json(['content' => 'Произошла ошибка при сохранении!'], 500);
         }
@@ -83,7 +85,7 @@ class EmployeeController extends Controller
                 return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
             }
         }
-
+        DB::commit();
         return 'Сотрудник успешно добавлен!';
     }
 
@@ -139,6 +141,7 @@ class EmployeeController extends Controller
         $employee->gender = $request->gender;
         $employee->salary = $request->salary;
 
+        DB::beginTransaction();
         if (!$employee->save()) {
             return response()->json(['content' => 'Произошла ошибка при сохранении измененных данных!'], 500);
         }
@@ -164,6 +167,7 @@ class EmployeeController extends Controller
             }
         }
 
+        DB::commit();
         return 'Данные сотрудника успешно изменены!';
     }
 
@@ -178,6 +182,7 @@ class EmployeeController extends Controller
         $employee = Employee::find($id);
         $oldDepartments = $employee->departments;
 
+        DB::beginTransaction();
         if (!Employee::destroy($id)) {
             return request()->json(['content' => 'Произошла ошибка при удалении сотрудника!'], 500);
         }
@@ -190,6 +195,7 @@ class EmployeeController extends Controller
             }
         }
 
+        DB::commit();
         return 'Сотрудник успешно удален!';
     }
 }
