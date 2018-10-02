@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Traits\ResponseInfo;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Models\Repositories\DepartmentRepository;
 
@@ -12,6 +13,8 @@ use App\Models\Repositories\DepartmentRepository;
  */
 class DepartmentController extends Controller
 {
+    use ResponseInfo;
+
     /**
      * @var DepartmentRepository
      */
@@ -58,10 +61,10 @@ class DepartmentController extends Controller
     {
         try {
             if ($this->repository->create($request->all())) {
-                return response()->json(['content' => 'Отдел успешно сохранен!']);
+                return $this->info('Отдел успешно сохранен!');
             }
         } catch (\Exception $e) {
-            return response()->json(['content' => $e->getMessage()], 500);
+            return $this->error($e->getMessage());
         }
     }
 
@@ -80,17 +83,17 @@ class DepartmentController extends Controller
      * Обновление данных отдела
      *
      * @param StoreDepartmentRequest $request
-     * @param  int $id
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(StoreDepartmentRequest $request, $id)
     {
         try {
             if ($this->repository->update(Department::findOrFail($id), $request->all())) {
-                return response()->json(['content' => 'Данные отдела успешно изменены!']);
+                return $this->info('Данные отдела успешно изменены!');
             }
         } catch (\Exception $e) {
-            return response()->json(['content' => $e->getMessage()], 500);
+            return $this->error($e->getMessage());
         }
     }
 
@@ -107,10 +110,10 @@ class DepartmentController extends Controller
 
         try {
             if ($this->repository->delete($department)) {
-                return response()->json(['content' => 'Отдел успешно удален.']);
+                return $this->info('Отдел успешно удален.');
             }
         } catch (\Exception $e) {
-            return response()->json(['content' => $e->getMessage()], 500);
+            return $this->error($e->getMessage());
         }
     }
 }
