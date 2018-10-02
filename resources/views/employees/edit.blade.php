@@ -5,7 +5,7 @@
         <h1 class="text-center">Редактировать сотрудника</h1>
         <div class="row">
             <div class="col-md-12">
-                <form id="employee_form" action="{{route('employees.update',['employee'=>$employee->employee_id])}}"
+                <form id="employee_form" action="{{route('employees.update',[$employee->id])}}"
                       method="post"
                       class="form-horizontal form">
                     {{ method_field('PUT') }}
@@ -72,11 +72,11 @@
                         <div class="col-md-10">
                             @foreach($departments as $department)
                                 <div class="row">
-                                    <label for="department-{{$department->department_id}}"
+                                    <label for="department-{{$department->id}}"
                                            class="control-label">{{ $department->name }}</label>
                                     <input type="checkbox" name="departments[]"
-                                           id="department-{{$department->department_id}}"
-                                           value="{{ $department->department_id }}" {{ $employee->departments->contains('department_id',$department->department_id)?'checked':'' }}>
+                                           id="department-{{$department->id}}"
+                                           value="{{ $department->id }}" {{ $employee->departments->contains('id',$department->id)?'checked':'' }}>
                                 </div>
                             @endforeach
                         </div>

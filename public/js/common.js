@@ -11,7 +11,7 @@ $(document).ready(function () {
         success: function (data) {
             $.gritter.add({
                 title: 'Уведомление',
-                text: data
+                text: data.content
             });
         },
         error: function (data) {

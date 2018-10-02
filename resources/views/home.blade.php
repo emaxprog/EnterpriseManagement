@@ -22,7 +22,7 @@
                                 <tr>
                                     <td>{{ $employee->surname }} {{ $employee->name }}</td>
                                     @foreach($departments as $department)
-                                        <td class="text-center">{!! $employee->departments->contains('department_id',$department->department_id)?'<i class="fa fa-check fa-lg"></i>':'' !!}</td>
+                                        <td class="text-center">{!! $employee->departments->contains('id',$department->id)?'<i class="fa fa-check fa-lg"></i>':'' !!}</td>
                                     @endforeach
                                 </tr>
                             @endforeach

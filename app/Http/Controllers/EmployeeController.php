@@ -2,200 +2,130 @@
 
 namespace App\Http\Controllers;
 
-use App\Department;
-use App\Employee;
+use App\Models\Employee;
 use App\Http\Requests\StoreEmployeeRequest;
-use Illuminate\Http\Request;
-use League\Flysystem\Exception;
-use Illuminate\Support\Facades\DB;
+use App\Models\Repositories\EmployeeRepository;
+use App\Models\Repositories\DepartmentRepository;
 
+/**
+ * Class EmployeeController
+ * @package App\Http\Controllers
+ */
 class EmployeeController extends Controller
 {
-    public function __construct()
+    /**
+     * @var EmployeeRepository
+     */
+    protected $repository;
+
+    /**
+     * @var
+     */
+    protected $departmentRepository;
+
+    /**
+     * EmployeeController constructor.
+     * @param EmployeeRepository $repository
+     * @param DepartmentRepository $departmentRepository
+     */
+    public function __construct(EmployeeRepository $repository, DepartmentRepository $departmentRepository)
     {
         $this->middleware('auth');
+        $this->repository = $repository;
+        $this->departmentRepository = $departmentRepository;
     }
 
     /**
-     * Display a listing of the resource.
+     * Отображение списка сотрудников
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
         $employees = Employee::paginate(10);
-
-        $data = [
-            'employees' => $employees,
-        ];
-
-        return view('employees.index', $data);
+        return view('employees.index', ['employees' => $employees,]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Показ формы создания нового сотрудника
      *
      * @return \Illuminate\Http\Response
      */
     public function create()
     {
-        $departments = Department::all();
-
-        $data = [
-            'departments' => $departments,
-        ];
-
-        return view('employees.create', $data);
+        $departments = $this->departmentRepository->all();
+        return view('employees.create', ['departments' => $departments]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Сохранение данных сотрудника
      *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param StoreEmployeeRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
      */
-    public function store(Request $request, StoreEmployeeRequest $employeeRequest)
+    public function store(StoreEmployeeRequest $request)
     {
-        if (!$departments = $request->departments) {
-            return response()->json(['content' => 'Нельзя создать сотрудника не указав ему хотя бы один отдел'], 500);
-        }
-
-        $employee = new Employee();
-        $employee->name = $request->name;
-        $employee->surname = $request->surname;
-        $employee->patronymic = $request->patronymic;
-        $employee->gender = $request->gender;
-        $employee->salary = $request->salary;
-        DB::beginTransaction();
-        if (!$employee->save()) {
-            return response()->json(['content' => 'Произошла ошибка при сохранении!'], 500);
-        }
-        $insertedId = $employee->employee_id;
-
-        $insertedEmployee = Employee::find($insertedId);
-
-        foreach ($departments as $department) {
-            $insertedEmployee->departments()->attach((int)$department);
-        }
-
-        foreach ($insertedEmployee->departments as $dep) {
-            $dep->max_salary = $dep->employees->max('salary');
-            $dep->count_employees = $dep->employees->count();
-            if (!$dep->save()) {
-                return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
+        try {
+            if ($model = $this->repository->create($request->all())) {
+                return response()->json(['content' => 'Сотрудник успешно добавлен.']);
             }
+        } catch (\Exception $e) {
+            return response()->json(['content' => $e->getMessage()], 500);
         }
-        DB::commit();
-        return 'Сотрудник успешно добавлен!';
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
+     * Показ формы редактирования сотрудника
      *
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
     {
-        $employee = Employee::find($id);
-        $departments = Department::all();
+        $employee = Employee::findOrFail($id);
+        $departments = $this->departmentRepository->all();
 
-        $data = [
+        return view('employees.edit', [
             'employee' => $employee,
             'departments' => $departments,
-        ];
-
-        return view('employees.edit', $data);
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Обновление данных сотрудника
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  int $id
-     * @return \Illuminate\Http\Response
+     * @param StoreEmployeeRequest $request
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id, StoreEmployeeRequest $employeeRequest)
+    public function update(StoreEmployeeRequest $request, $id)
     {
-        if (!$departments = $request->departments) {
-            return response()->json(['content' => 'Нельзя сохранить изменения сотрудника не указав ему хотя бы один отдел'], 500);
-        }
-
-        $employee = Employee::find($id);
-        $oldDepartments = $employee->departments;
-
-        $employee->name = $request->name;
-        $employee->surname = $request->surname;
-        $employee->patronymic = $request->patronymic;
-        $employee->gender = $request->gender;
-        $employee->salary = $request->salary;
-
-        DB::beginTransaction();
-        if (!$employee->save()) {
-            return response()->json(['content' => 'Произошла ошибка при сохранении измененных данных!'], 500);
-        }
-
-        $updatedId = $employee->employee_id;
-
-        $updatedEmployee = Employee::find($updatedId);
-
-        $updatedEmployee->departments()->detach();
-
-        foreach ($departments as $department) {
-            $updatedEmployee->departments()->attach((int)$department);
-        }
-
-        $commonDepartments = $oldDepartments->merge($updatedEmployee->departments);
-
-
-        foreach ($commonDepartments as $dep) {
-            $dep->max_salary = $dep->employees->max('salary');
-            $dep->count_employees = $dep->employees->count();
-            if (!$dep->save()) {
-                return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
+        $model = Employee::findOrFail($id);
+        try {
+            if ($model = $this->repository->update($model, $request->all())) {
+                return response()->json(['content' => 'Данные сотрудника успешно изменены.']);
             }
+        } catch (\Exception $e) {
+            return response()->json(['content' => $e->getMessage()], 500);
         }
-
-        DB::commit();
-        return 'Данные сотрудника успешно изменены!';
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Удаление сотрудника
      *
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        $employee = Employee::find($id);
-        $oldDepartments = $employee->departments;
-
-        DB::beginTransaction();
-        if (!Employee::destroy($id)) {
-            return request()->json(['content' => 'Произошла ошибка при удалении сотрудника!'], 500);
-        }
-
-        foreach ($oldDepartments as $dep) {
-            $dep->max_salary = $dep->employees->max('salary');
-            $dep->count_employees = $dep->employees->count();
-            if (!$dep->save()) {
-                return response()->json(['content' => 'Произошла ошибка при изменении данных об отделах, в которых работал сотрудник!'], 500);
+        $model = Employee::findOrFail($id);
+        try {
+            if ($this->repository->delete($model)) {
+                return response()->json(['content' => 'Сотрудник успешно удален.']);
             }
+        } catch (\Exception $e) {
+            return response()->json(['content' => $e->getMessage()], 500);
         }
-
-        DB::commit();
-        return 'Сотрудник успешно удален!';
     }
 }

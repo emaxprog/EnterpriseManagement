@@ -33,12 +33,12 @@
                             <td>
                                 {{ $employee->departments->implode('name',',') }}
                             </td>
-                            <td><a href="{{ route('employees.edit',['employee'=>$employee->employee_id]) }}"
+                            <td><a href="{{ route('employees.edit',[$employee->id]) }}"
                                    class="btn btn-default"><i
                                             class="fa fa-edit"></i></a>
                             </td>
                             <td>
-                                <a href="{{ route('employees.destroy',['employee'=>$employee->employee_id]) }}"
+                                <a href="{{ route('employees.destroy',[$employee->id]) }}"
                                    class="btn btn-danger btn-destroy"><i
                                             class="fa fa-trash"></i></a>
                             </td>

@@ -65,11 +65,11 @@
                         <div class="col-md-10">
                             @foreach($departments as $department)
                                 <div class="row">
-                                    <label for="department-{{$department->department_id}}"
+                                    <label for="department-{{$department->id}}"
                                            class="control-label">{{ $department->name }}</label>
                                     <input type="checkbox" name="departments[]"
-                                           id="department-{{$department->department_id}}"
-                                           value="{{ $department->department_id }}">
+                                           id="department-{{$department->id}}"
+                                           value="{{ $department->id }}">
                                 </div>
                             @endforeach
                         </div>

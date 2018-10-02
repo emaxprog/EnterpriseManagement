@@ -2,129 +2,115 @@
 
 namespace App\Http\Controllers;
 
-use App\Department;
+use App\Models\Department;
 use App\Http\Requests\StoreDepartmentRequest;
-use Illuminate\Http\Request;
-use League\Flysystem\Exception;
+use App\Models\Repositories\DepartmentRepository;
 
+/**
+ * Class DepartmentController
+ * @package App\Http\Controllers
+ */
 class DepartmentController extends Controller
 {
-    public function __construct()
+    /**
+     * @var DepartmentRepository
+     */
+    protected $repository;
+
+    /**
+     * DepartmentController constructor.
+     * @param DepartmentRepository $repository
+     */
+    public function __construct(DepartmentRepository $repository)
     {
         $this->middleware('auth');
+        $this->repository = $repository;
     }
 
     /**
-     * Display a listing of the resource.
+     * Отображение списка отделов
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
         $departments = Department::paginate(10);
-
-        $data = [
-            'departments' => $departments
-        ];
-
-        return view('departments.index', $data);
+        return view('departments.index', ['departments' => $departments]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Показ формы создания нового отдела
      *
      * @return \Illuminate\Http\Response
      */
     public function create()
     {
-
         return view('departments.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Сохранение данных нового отдела
      *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param StoreDepartmentRequest $request
+     * @return \Illuminate\Http\JsonResponse|string
      */
-    public function store(Request $request, StoreDepartmentRequest $departmentRequest)
+    public function store(StoreDepartmentRequest $request)
     {
-        $department = new Department();
-        $department->name = $request->name;
-
-        if (!$department->save()) {
-            return response()->json(['content' => 'Произошла ошибка при сохранении'], 500);
+        try {
+            if ($this->repository->create($request->all())) {
+                return response()->json(['content' => 'Отдел успешно сохранен!']);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['content' => $e->getMessage()], 500);
         }
-
-        return 'Отдел успешно сохранен!';
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
+     * Показ формы редактирования отдела
      *
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
     {
-        $department = Department::find($id);
-
-        $data = [
-            'department' => $department,
-        ];
-
-        return view('departments.edit', $data);
+        return view('departments.edit', ['department' => Department::findOrFail($id)]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Обновление данных отдела
      *
-     * @param  \Illuminate\Http\Request $request
+     * @param StoreDepartmentRequest $request
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id, StoreDepartmentRequest $departmentRequest)
+    public function update(StoreDepartmentRequest $request, $id)
     {
-        $department = Department::find($id);
-        $department->name = $request->name;
-
-        if (!$department->save()) {
-            return response()->json(['content' => 'Произошла ошибка при сохранении измененных данных'], 500);
+        try {
+            if ($this->repository->update(Department::findOrFail($id), $request->all())) {
+                return response()->json(['content' => 'Данные отдела успешно изменены!']);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['content' => $e->getMessage()], 500);
         }
-
-        return 'Данные отдела успешно изменены!';
     }
 
 
     /**
-     * Remove the specified resource from storage.
+     * Удаление отдела
      *
-     * @param  int $id
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        $department = Department::find($id);
+        $department = Department::findOrFail($id);
 
-        if ($department->employees->count() > 0) {
-            return response()->json(['content' => 'Нельзя удалить отдел в котором есть сотрудники'], 500);
+        try {
+            if ($this->repository->delete($department)) {
+                return response()->json(['content' => 'Отдел успешно удален.']);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['content' => $e->getMessage()], 500);
         }
-
-        if (!Department::destroy($id)) {
-            return response()->json(['content' => 'Произошла ошибка при удалении отдела'], 500);
-        }
-
-        return 'Отдел успешно удален';
     }
 }

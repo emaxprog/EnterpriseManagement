@@ -6,7 +6,7 @@
         <div class="row">
             <div class="col-md-12">
                 <form id="department_form"
-                      action="{{route('departments.update',['department'=>$department->department_id])}}" method="post"
+                      action="{{route('departments.update',[$department->id])}}" method="post"
                       class="form-horizontal form">
                     {{ method_field('PUT') }}
                     {{csrf_field()}}
