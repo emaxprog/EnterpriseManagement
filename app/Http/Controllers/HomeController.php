@@ -31,12 +31,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $memcached = new \Memcached();
-        $memcached->addServer('localhost', 11211);
-
-// get(prefix:key)
-        dd($memcached->get('laravel:departments'));
-
         $employees = Employee::paginate(10);
         $departments = $this->departmentRepository->all();
 
